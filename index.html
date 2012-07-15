@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<script type="text/javascript" src="http://yui.yahooapis.com/3.5.1/build/yui/yui.js"></script>
+	</head>
+	<body>
+		<div>TODO write content</div>
+		<div id="container"></div>
+		<script>
+			YUI({
+				groups: {
+					local: {
+						base:'./',
+						modules: {
+							flyweightmanager: {
+								path:'flyweightmanager.js',
+								requires:[]
+							},
+							flyweightnode: {
+								path: 'flyweightnode.js',
+								requires: ['base-core', 'base-build']
+							},
+							treeview: {
+								path: 'treeview.js',
+								requires: ['flyweightmanager', 'widget','base-build', 'treenode']
+							},
+							treenode: {
+								path: 'treenode.js',
+								requires: ['flyweightnode','base-build']
+							}
+						}
+					}
+				},
+				lang:'es'
+			}).use('treeview', function (Y) {
+				var tv = new Y.TreeView({tree: [
+					{
+						label:'label 0',
+						children: [
+							{
+								label: 'label 0-0',
+								children: [
+									{
+										label: 'label 0-0-0'
+									},
+									{
+										label: 'label 0-0-1'
+									}
+								]
+							},
+							{
+								label: 'label 0-1'
+							}
+						]
+					},
+					{
+						label: 'label 1'
+					}
+					
+				]});
+				tv.render('#container');
+			});
+		</script>
+	</body>
+</html>
