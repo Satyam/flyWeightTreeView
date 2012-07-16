@@ -18,6 +18,8 @@ YUI.add('flyweightnode', function (Y, NAME) {
 		{
 			_node:null,
 			_getHTML: function() {
+				// assumes that if you asked for the HTML it is because you are rendering it
+				this._node._rendered = true;
 				var attrs = this.getAttrs(),
 					s = '', 
 					templ = this.get('template') || this.constructor.TEMPLATE || this.get('root').get('nodeTemplate');
@@ -47,6 +49,23 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						return ret;
 					});
 				}
+			},
+			_getExpanded: function () {
+				return this._node.expanded !== false;
+			},
+			_setExpanded: function (value) {
+				this._node.expanded = value = !!value;
+				if (!this._node._rendered) {
+				}
+				var n = Y.one('#' + this.get('id'));
+				if (value) {
+					n.removeClass(FWM.CNAME_COLLAPSED);
+				} else {
+					n.addClass(FWM.CNAME_COLLAPSED);
+				}
+			},
+			toggle: function() {
+				this.set('expanded', !this.get('expanded'));
 			}
 		},
 		{
@@ -88,6 +107,10 @@ YUI.add('flyweightnode', function (Y, NAME) {
 							return this._node.id = value;
 						}
 					}
+				},
+				expanded: {
+					getter: '_getExpanded',
+					setter: '_setExpanded'
 				}
 			}
 		}

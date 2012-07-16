@@ -12,7 +12,8 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			return getCName(NAME, name);
 		},
 		CNAME_NODE = cName('node'),
-		CNAME_CHILDREN = cName('children');
+		CNAME_CHILDREN = cName('children'),
+		CNAME_COLLAPSED = cName('collapsed');
 	
 	var FWM = function (config) {
 		this._pool = {
@@ -38,6 +39,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 
 	FWM.CNAME_NODE = CNAME_NODE;
 	FWM.CNAME_CHILDREN = CNAME_CHILDREN;
+	FWM.CNAME_COLLAPSED = CNAME_COLLAPSED;
 
 	FWM.prototype = {
 		_root: null,
@@ -104,6 +106,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		_onClick: function (ev) {
 			var id = ev.domEvent.target.ancestor(DOT + CNAME_NODE, true).get('id'),
 				found = null,
+				fwNode,
 				scan = function (node) {
 					if (node.id === id) {
 						found = node;
@@ -114,7 +117,10 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 					return false;
 				};
 			if (scan(this._root)) {
-				ev.node = this._poolFetch(found);
+				fwNode = this._poolFetch(found);
+				ev.node = fwNode; 
+				fwNode.fire('click');
+				this._poolReturn(fwNode);
 			}
 			
 		},
