@@ -1,5 +1,6 @@
-/**
- * @module flyweightmanager
+/*jslint nomen: true, white: true, browser: true, maxerr: 100 */
+/*global YUI *//**
+ * @module treenode
  */
 YUI.add('treenode', function (Y, NAME) {
 	
@@ -11,7 +12,7 @@ YUI.add('treenode', function (Y, NAME) {
 			
 		},
 		{
-			TEMPLATE: '<div class="toggle"></div><div class="icon"></div><div class="selected"></div><div class="content">{label}</div>',
+			TEMPLATE: '<li id="{id}" class="node"><div class="toggle"></div><div class="icon"></div><div class="selected"></div><div class="content">{label}</div><ul>{children}</ul></li>',
 			ATTRS: {
 				
 			}

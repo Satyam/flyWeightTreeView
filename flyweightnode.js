@@ -1,5 +1,7 @@
+/*jslint nomen: true, white: true, browser: true, maxerr: 100 */
+/*global YUI */
 /**
- * @module flyweightmanager
+ * @module flyweightnode
  */
 YUI.add('flyweightnode', function (Y, NAME) {
 	var Lang = Y.Lang;
@@ -11,11 +13,17 @@ YUI.add('flyweightnode', function (Y, NAME) {
 		{
 			_node:null,
 			_getHTML: function() {
-				var s = '<ul>', templ = this.get('template') || FWN.TEMPLATE || this.get('root').get('nodeTemplate');
+				var attrs = this.getAttrs(),
+					s = '', 
+					templ = this.get('template') || this.constructor.TEMPLATE || this.get('root').get('nodeTemplate');
 				this.forEachChild( function (fwNode) {
 					s += fwNode._getHTML();
-				})
-				return '<li>' + Lang.sub(templ, this._node) + s + '</ul></li>';
+				});
+				attrs.children = s;
+				if (!attrs.id) {
+					this._set('id', attrs.id = Y.guid());
+				}
+				return Lang.sub(templ, attrs);
 				
 			},
 			_slideTo: function (node) {
@@ -42,7 +50,32 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					readOnly: true
 				},
 				template: {
-					validator: Lang.isString
+					validator: Lang.isString,
+					getter: function () {
+						return this._node.template;
+					},
+					setter: function (value) {
+						this._node.template = value;
+					}
+				},
+				label: {
+					validator: Lang.isString,
+					getter: function () {
+						return this._node.label;
+					},
+					setter: function (value) {
+						this._node.label = value;
+					}
+				},
+				id: {
+					writeOnce: true,
+					validator: Lang.isString,
+					getter: function () {
+						return this._node.id;
+					},
+					setter: function (value) {
+						this._node.id = value;
+					}
 				}
 			}
 		}

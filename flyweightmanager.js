@@ -1,3 +1,5 @@
+/*jslint nomen: true, white: true, browser: true, maxerr: 100 */
+/*global YUI */
 /**
  * @module flyweightmanager
  */
@@ -7,7 +9,13 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 	var FWM = function (config) {
 		this._pool = {
 			_default: []
-		}
+		},
+		this.on('click', this._onClick, this);
+		this.after('click', this._afterClick, this);
+		this.publish('click', {
+			preventedFn: this._clickDropped,
+			stoppedFn: this._clickDropped
+		});
 		
 	};
 	
@@ -16,7 +24,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			value: 'FlyweightNode'			
 		},
 		nodeTemplate: {
-			value: '<div class="content">{label}</div>'
+			value: '<div id="{id}" class="node"><div class="content">{label}</div><div class="children">{children}</div></div>'
 		}
 	};
 	
@@ -81,6 +89,33 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			});
 			this._poolReturn(root);
 			return s;
+		},
+		_onClick: function (ev) {
+			var id = ev.domEvent.target.ancestor('.node', true).get('id'),
+				found = null,
+				scan = function (node) {
+					if (node.id === id) {
+						found = node;
+						return true;
+					} else if (node.children) {
+						return Y.Array.some(node.children, scan);
+					}
+					return false;
+				};
+			if (scan(this._root)) {
+				ev.node = this._poolFetch(found);
+			}
+			
+		},
+		_afterClick: function (ev) {
+			if (ev.node) {
+				this._poolReturn(ev.node);
+			}
+		},
+		_clickDropped: function (ev) {
+			if (ev._getFacade().node) {
+				this._poolReturn(ev._getFacade().node);
+			}
 		}
 		
 	};

@@ -61,6 +61,10 @@
 					
 				]});
 				tv.render('#container');
+				tv.on('click', function(ev) {
+					console.log(ev.node.get('label'));
+					ev.halt();
+				});
 			});
 		</script>
 	</body>
