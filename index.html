@@ -6,8 +6,10 @@
 		<script type="text/javascript" src="http://yui.yahooapis.com/3.5.1/build/yui/yui.js"></script>
 	</head>
 	<body>
-		<div>TODO write content</div>
+		<h1>A Tree:</h1>
 		<div id="container"></div>
+		<h1>A form:</h1>
+		<div id="form"></div>
 		<script>
 			YUI({
 				groups: {
@@ -16,7 +18,7 @@
 						modules: {
 							flyweightmanager: {
 								path:'flyweightmanager.js',
-								requires:[]
+								requires:['classnamemanager']
 							},
 							flyweightnode: {
 								path: 'flyweightnode.js',
@@ -29,12 +31,25 @@
 							treenode: {
 								path: 'treenode.js',
 								requires: ['flyweightnode','base-build']
+							},
+							form: {
+								path: 'form.js',
+								requires: ['flyweightmanager', 'widget','base-build','input-field']
+							},
+							"input-field": {
+								path: 'input-field.js',
+								requires: ['flyweightnode','base-build']
+							},
+							"field-set": {
+								path: 'field-set.js',
+								requires: ['flyweightnode','base-build']
 							}
 						}
 					}
 				},
 				lang:'es'
-			}).use('treeview', function (Y) {
+			}).use('treeview', 'form', 'input-field','field-set', function (Y) {
+				'use strict';
 				var tv = new Y.TreeView({tree: [
 					{
 						label:'label 0',
@@ -63,8 +78,35 @@
 				tv.render('#container');
 				tv.on('click', function(ev) {
 					console.log(ev.node.get('label'));
-					ev.halt();
+					// ev.halt();
 				});
+				
+				var f = new Y.Form({fields: [
+					{
+						label: 'First Field',
+						name: 'firstField',
+						value: 1
+					},
+					{
+						label: 'Second Field',
+						name: 'secondField',
+						value: 2
+						
+					},
+					{
+						type:'FieldSet',
+						label:'Set of Fields',
+						children: [
+							{
+								label: 'First Child Field'
+							},
+							{
+								label: 'Second Child field'
+							}
+						]
+					}
+				]});
+				f.render('#form');
 			});
 		</script>
 	</body>

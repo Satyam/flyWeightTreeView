@@ -1,30 +1,30 @@
 /*jslint nomen: true, white: true, browser: true, maxerr: 100 */
 /*global YUI */
 /**
- * @module treeview
+ * @module form
  */
-YUI.add('treeview', function (Y, NAME) {
+YUI.add('form', function (Y, NAME) {
 	'use strict';
 	var CBX = 'contentBox';
 
-	var TV = Y.Base.create(
+	var Form = Y.Base.create(
 		NAME,
 		Y.Widget,
 		[Y.FlyweightManager],
 		{
 			initializer: function (config) {
-				this._loadConfig(config.tree);
+				this._loadConfig(config.fields);
 			},
 			renderUI: function () {
 				this.get(CBX).setContent(this._getHTML());
 			},
-			CONTENT_TEMPLATE: '<ul></ul>'
+			CONTENT_TEMPLATE: '<form></form>'
 			
 		},
 		{
 			ATTRS: {
 				defaultType: {
-					value: 'TreeNode'
+					value: 'InputField'
 				}
 				
 			}
@@ -32,9 +32,9 @@ YUI.add('treeview', function (Y, NAME) {
 		}
 	);
 		
-	Y.TreeView = TV;
+	Y.Form = Form;
 	
 }, '@VERSION@' ,
 {
-	requires: ['flyweightmanager', 'widget','base-build', 'treenode']
+	requires: ['flyweightmanager', 'widget','base-build','input-field']
 });

@@ -3,6 +3,7 @@
  * @module treenode
  */
 YUI.add('treenode', function (Y, NAME) {
+	'use strict';
 	
 	var TN = Y.Base.create(
 		NAME,
@@ -12,7 +13,7 @@ YUI.add('treenode', function (Y, NAME) {
 			
 		},
 		{
-			TEMPLATE: '<li id="{id}" class="node"><div class="toggle"></div><div class="icon"></div><div class="selected"></div><div class="content">{label}</div><ul>{children}</ul></li>',
+			TEMPLATE: '<li id="{id}" class="{cname_node}"><div class="toggle"></div><div class="icon"></div><div class="selected"></div><div class="content">{label}</div><ul class="{cname_children}">{children}</ul></li>',
 			ATTRS: {
 				
 			}

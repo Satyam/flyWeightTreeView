@@ -4,7 +4,12 @@
  * @module flyweightnode
  */
 YUI.add('flyweightnode', function (Y, NAME) {
-	var Lang = Y.Lang;
+	'use strict';
+
+	// TODO add expanded attribute and rendering
+	// TODO add method for locating children container
+	var Lang = Y.Lang,
+		FWM = Y.FlyweightManager;
 	
 	var FWN = Y.Base.create(
 		NAME,
@@ -20,9 +25,9 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					s += fwNode._getHTML();
 				});
 				attrs.children = s;
-				if (!attrs.id) {
-					this._set('id', attrs.id = Y.guid());
-				}
+				attrs.cname_node = FWM.CNAME_NODE,
+				attrs.cname_children = FWM.CNAME_CHILDREN;
+				
 				return Lang.sub(templ, attrs);
 				
 			},
@@ -68,13 +73,20 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					}
 				},
 				id: {
-					writeOnce: true,
 					validator: Lang.isString,
 					getter: function () {
-						return this._node.id;
+						var id = this._node.id;
+						if (!id) {
+							id = this._node.id = Y.guid()
+						}
+						return id;
 					},
 					setter: function (value) {
-						this._node.id = value;
+						if (this._node.id) {
+							return Y.Attribute.INVALID_VALUE;
+						} else {
+							return this._node.id = value;
+						}
 					}
 				}
 			}

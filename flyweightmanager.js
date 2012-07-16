@@ -4,7 +4,15 @@
  * @module flyweightmanager
  */
 YUI.add('flyweightmanager', function (Y, NAME) {
-	var Lang = Y.Lang;
+	'use strict';
+	var Lang = Y.Lang,
+		DOT = '.',
+		getCName = Y.ClassNameManager.getClassName,
+		cName = function (name) {
+			return getCName(NAME, name);
+		},
+		CNAME_NODE = cName('node'),
+		CNAME_CHILDREN = cName('children');
 	
 	var FWM = function (config) {
 		this._pool = {
@@ -24,10 +32,12 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			value: 'FlyweightNode'			
 		},
 		nodeTemplate: {
-			value: '<div id="{id}" class="node"><div class="content">{label}</div><div class="children">{children}</div></div>'
+			value: '<div id="{id}" class="{cname_node}"><div class="content">{label}</div><div class="{cname_children}">{children}</div></div>'
 		}
 	};
-	
+
+	FWM.CNAME_NODE = CNAME_NODE;
+	FWM.CNAME_CHILDREN = CNAME_CHILDREN;
 
 	FWM.prototype = {
 		_root: null,
@@ -38,8 +48,9 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			};
 		},
 		_poolFetch: function(node) {
-			var pool = this._pool[node.type || '_default'],
+			var pool,
 				fwNode;
+				
 			if (node.type) {
 				pool = this._pool[node.type];
 				if (!pool) {
@@ -91,7 +102,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			return s;
 		},
 		_onClick: function (ev) {
-			var id = ev.domEvent.target.ancestor('.node', true).get('id'),
+			var id = ev.domEvent.target.ancestor(DOT + CNAME_NODE, true).get('id'),
 				found = null,
 				scan = function (node) {
 					if (node.id === id) {
@@ -113,7 +124,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			}
 		},
 		_clickDropped: function (ev) {
-			if (ev._getFacade().node) {
+			if (ev._getFacade && ev._getFacade().node) {
 				this._poolReturn(ev._getFacade().node);
 			}
 		}
@@ -123,5 +134,5 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 	Y.FlyweightManager = FWM;
 }, '@VERSION@' ,
 {
-	requires: []
+	requires: ['classnamemanager']
 });
