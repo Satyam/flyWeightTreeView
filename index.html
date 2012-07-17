@@ -78,7 +78,7 @@
 				]});
 				tv.render('#container');
 				tv.after('click', function(ev) {
-					console.log(ev.node.get('label'));
+					console.log( this._poolFetchFromEvent(ev).get('label'));
 					// ev.halt();
 				});
 				
