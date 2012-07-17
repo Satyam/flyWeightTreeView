@@ -49,10 +49,22 @@ YUI.add('treeview', function (Y, NAME) {
 					this._loadConfig(config.tree);
 					this.after('click', this._afterClick);
 				},
-				
+				/**
+				 * Widget lifecyle method
+				 * I opted for not including this method in FlyweightManager so that
+				 * it can be used to extend Base, not just Widget
+				 * @method renderUI
+				 * @protected
+				 */
 				renderUI: function () {
 					this.get(CBX).setContent(this._getHTML());
 				},
+				/**
+				 * Responds to a click event by firing the click on a TreeNode positioned over the originating node.
+				 * @method _afterClick
+				 * @param ev {EventFacade}
+				 * @protected
+				 */
 				_afterClick: function (ev) {
 					var node = this._poolFetchFromEvent(ev);
 					if (node) {
@@ -60,6 +72,11 @@ YUI.add('treeview', function (Y, NAME) {
 					}
 					this._poolReturn(node);
 				},
+				/**
+				 * Overrides the default CONTENT_TEMPLATE to make it an unordered list instead of a div
+				 * @property CONTENT\_TEMPLATE
+				 * @type String
+				 */
 				CONTENT_TEMPLATE: '<ul></ul>'
 
 			},

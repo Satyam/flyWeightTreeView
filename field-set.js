@@ -4,23 +4,23 @@
  */
 YUI.add('field-set', function (Y, NAME) {
 	'use strict';
-	var Lang = Y.Lang;
+	var Lang = Y.Lang,
 	
-	var FS = Y.Base.create(
-		NAME,
-		Y.FlyweightNode,
-		[],
-		{
-			
-		},
-		{
-			TEMPLATE: '<fieldset id="{id}" class="{cname_node} {cname_children}"><legend>{label}</legend>{children}</fieldset>',
-			ATTRS: {
-				
+		FS = Y.Base.create(
+			NAME,
+			Y.FlyweightNode,
+			[],
+			{
+
+			},
+			{
+				TEMPLATE: '<fieldset id="{id}" class="{cname_node} {cname_children}"><legend>{label}</legend>{children}</fieldset>',
+				ATTRS: {
+
+				}
+
 			}
-			
-		}
-	);
+		);
 		
 	Y.FieldSet = FS;
 

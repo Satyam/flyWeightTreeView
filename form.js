@@ -5,33 +5,33 @@
  */
 YUI.add('form', function (Y, NAME) {
 	'use strict';
-	var CBX = 'contentBox';
+	var CBX = 'contentBox',
 
-	var Form = Y.Base.create(
-		NAME,
-		Y.Widget,
-		[Y.FlyweightManager],
-		{
-			initializer: function (config) {
-				this._loadConfig(config.fields);
+		Form = Y.Base.create(
+			NAME,
+			Y.Widget,
+			[Y.FlyweightManager],
+			{
+				initializer: function (config) {
+					this._loadConfig(config.fields);
+				},
+				renderUI: function () {
+					this.get(CBX).setContent(this._getHTML());
+				},
+				CONTENT_TEMPLATE: '<form></form>'
+
 			},
-			renderUI: function () {
-				this.get(CBX).setContent(this._getHTML());
-			},
-			CONTENT_TEMPLATE: '<form></form>'
-			
-		},
-		{
-			ATTRS: {
-				defaultType: {
-					value: 'InputField'
+			{
+				ATTRS: {
+					defaultType: {
+						value: 'InputField'
+					}
+
 				}
-				
+
 			}
-			
-		}
-	);
-		
+		);
+
 	Y.Form = Form;
 	
 }, '@VERSION@' ,

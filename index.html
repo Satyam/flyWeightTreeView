@@ -7,6 +7,7 @@
 		<link REL=stylesheet type="text/css" HREF="style.css">
 	</head>
 	<body>
+		<a href="out/index.html">API docs</a>
 		<h1>A Tree:</h1>
 		<div id="container"></div>
 		<h1>A form:</h1>
@@ -57,6 +58,7 @@
 						children: [
 							{
 								label: 'label 0-0',
+								expanded: false,
 								children: [
 									{
 										label: 'label 0-0-0'
@@ -80,6 +82,9 @@
 				tv.after('click', function(ev) {
 					console.log( this._poolFetchFromEvent(ev).get('label'));
 					// ev.halt();
+				});
+				tv._forSomeCfgNode(function(cfgNode, depth, index) {
+					console.log(cfgNode.label, depth, index);
 				});
 				
 				var f = new Y.Form({fields: [

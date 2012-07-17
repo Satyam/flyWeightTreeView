@@ -16,18 +16,21 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		CNAME_NODE = cName('node'),
 		CNAME_CHILDREN = cName('children'),
 		CNAME_COLLAPSED = cName('collapsed'),
-		CNAME_EXPANDED = cName('expanded');
+		CNAME_EXPANDED = cName('expanded'),
+		CNAME_NOCHILDREN = cName('no-children'),
+		CNAME_FIRSTCHILD = cName('first-child'),
+		CNAME_LASTCHILD = cName('last-child'),
 	
 	/**
 	 * Extension to handle its child nodes by using the flyweight pattern.
 	 * @class FlyweightManager
 	 * @constructor
 	 */
-	var FWM = function () {
-		this._pool = {
-			_default: []
+		FWM = function () {
+			this._pool = {
+				_default: []
+			};
 		};
-	};
 	
 	FWM.ATTRS = {
 		/**
@@ -82,6 +85,27 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 	 * @static
 	 */
 	FWM.CNAME_EXPANDED = CNAME_EXPANDED;
+	/**
+	 * Constant added to the DOM element for this node when it has no children.
+	 * @property CNAME\_NOCHILDREN
+	 * @type String
+	 * @static
+	 */
+	FWM.CNAME_NOCHILDREN = CNAME_NOCHILDREN;
+	/**
+	 * Constant added to the DOM element for this node when it is the first in the group.
+	 * @property CNAME\_FIRSTCHILD
+	 * @type String
+	 * @static
+	 */
+	FWM.CNAME_FIRSTCHILD = CNAME_FIRSTCHILD;
+	/**
+	 * Constant added to the DOM element for this node when it is the last in the group.
+	 * @property CNAME\_LASTCHILD
+	 * @type String
+	 * @static
+	 */
+	FWM.CNAME_LASTCHILD = CNAME_LASTCHILD;
 
 	FWM.prototype = {
 		/**
@@ -201,8 +225,8 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		_getHTML: function () {
 			var s = '',
 				root = this._getRootNode();
-			root.forEachChild( function (fwNode) {
-				s += fwNode._getHTML();
+			root.forEachChild( function (fwNode, index, array) {
+				s += fwNode._getHTML(index, array.length, 0);
 			});
 			this._poolReturn(root);
 			return s;
@@ -244,6 +268,28 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 				return this._poolFetch(found);
 			}
 			return null;			
+		},
+		/**
+		 * Traverses the whole configuration tree, calling a given function for each node.
+		 * If the function returns true, the traversing will terminate.
+		 * @method _forSomeCfgNode
+		 * @param fn {Function} Function to call on each configuration node
+		 *		@param cfgNode {Object} node in the configuratino tree
+		 *		@param depth {Integer} depth of this node within the tee
+		 *		@param index {Integer} index of this node within the array of its siblings
+		 * @param scope {Object} scope to run the function in, defaults to this.
+		 * @return true if any of the function calls returned true (the traversal was terminated earlier)
+		 * @protected
+		 */
+		_forSomeCfgNode: function(fn, scope) {
+			scope = scope || this;
+			var loop = function(cfgNode, depth) {
+				return Y.Array.some(cfgNode.children || [], function(childNode, index) {
+					fn.call(scope, childNode,depth, index);
+					return loop(childNode,depth + 1);
+				});
+			};
+			return loop(this._tree, 0);
 		}
 	};
 	
