@@ -13,8 +13,6 @@
 YUI.add('flyweightnode', function (Y, NAME) {
 	'use strict';
 
-	// TODO add expanded attribute and rendering
-	// TODO add method for locating children container
 	var Lang = Y.Lang,
 		FWM = Y.FlyweightManager,
 	/**
@@ -144,12 +142,13 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 */
 				_setExpanded: function (value) {
 					this._node.expanded = value = !!value;
-					var n = Y.one('#' + this.get('id'));
+					var s, depth, n = Y.one('#' + this.get('id'));
 					if (value && !this._node._childRendered) {
 						this._node._childRendered = true;
-						var s = '', depth = this.get('depth');
+						s = '';
+						depth = this.get('depth');
 						this.forEachChild(function (fwNode, index, array) {
-							s += fwNode._getHTML(index, array.length, depth + 1)// TODO render the nodes
+							s += fwNode._getHTML(index, array.length, depth + 1);
 						});
 						n.one('.' + FWM.CNAME_CHILDREN).setContent(s);
 					}
