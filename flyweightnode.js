@@ -98,10 +98,10 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * Executes the given function on each of the child nodes of this node.
 				 * @method forEachChild
 				 * @param fn {Function} Function to be executed on each node
-				 *		@param child {Y.FlyweightNode} Instance of a suitable subclass of FlyweightNode, 
+				 *		@param fn.child {Y.FlyweightNode} Instance of a suitable subclass of FlyweightNode, 
 				 *		positioned on top of the child node
-				 *		@param index {Integer} Index of this child within the array of children
-				 *		@param array {Array} array containing itself and its siblings
+				 *		@param fn.index {Integer} Index of this child within the array of children
+				 *		@param fn.array {Array} array containing itself and its siblings
 				 * @param scope {object} The falue of this for the function.  Defaults to the parent.
 				**/
 				forEachChild: function(fn, scope) {

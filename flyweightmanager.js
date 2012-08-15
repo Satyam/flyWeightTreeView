@@ -261,6 +261,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * @method _poolFetchFromEvent
 		 * @param ev {EventFacade}
 		 * @return {Y.FlyweightNode} The FlyweightNode instance or null if not found.
+		 * @private
 		 */
 		_poolFetchFromEvent: function (ev) {
 			var found = this._findNodeByElement(ev.domEvent.target);
@@ -274,9 +275,9 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * If the function returns true, the traversing will terminate.
 		 * @method _forSomeCfgNode
 		 * @param fn {Function} Function to call on each configuration node
-		 *		@param cfgNode {Object} node in the configuratino tree
-		 *		@param depth {Integer} depth of this node within the tee
-		 *		@param index {Integer} index of this node within the array of its siblings
+		 *		@param fn.cfgNode {Object} node in the configuratino tree
+		 *		@param fn.depth {Integer} depth of this node within the tee
+		 *		@param fn.index {Integer} index of this node within the array of its siblings
 		 * @param scope {Object} scope to run the function in, defaults to this.
 		 * @return true if any of the function calls returned true (the traversal was terminated earlier)
 		 * @protected
