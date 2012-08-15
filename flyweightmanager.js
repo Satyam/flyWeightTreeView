@@ -295,7 +295,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 	};
 	
 	Y.FlyweightManager = FWM;
-}, '@VERSION@' ,
+}, '@VERSION@',
 {
 	requires: ['classnamemanager']
 });

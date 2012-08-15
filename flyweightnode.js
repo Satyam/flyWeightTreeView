@@ -290,7 +290,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 		);
 	Y.FlyweightNode = FWN;
 
-}, '@VERSION@' ,
+}, '@VERSION@',
 {
 	requires: ['base', 'base-build']
 });
