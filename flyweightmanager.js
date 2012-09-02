@@ -131,6 +131,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * to process the tree definition anyway it wants, adding defaults and such
 		 * and to name the tree whatever is suitable.
 		 * For TreeView, the configuration property is named `tree`, for a form, it is named `form`.
+		 * It also sets the `parent` references for all nodes.
 		 * @method _loadConfig
 		 * @param tree {Object} configuration tree
 		 * @protected
@@ -139,6 +140,13 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			this._tree = {
 				children: Y.clone(tree)
 			};
+			var setParent = function (parent) {
+				Y.Array.each(parent.children, function (child) {
+					child._parent = parent;
+					setParent(child);
+				});
+			};
+			setParent(this._tree);
 		},
 		/**
 		 * Pulls from the pool an instance of the type declared in the given node
@@ -175,7 +183,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * @protected
 		 */
 		_poolReturn: function (fwNode) {
-			var pool = this._pool[fwNode._node.type || '_default'];
+			var pool = this._pool[(fwNode._node && fwNode._node.type) || '_default'];
 			if (pool) {
 				pool.push(fwNode);
 			}

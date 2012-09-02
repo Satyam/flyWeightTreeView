@@ -52,10 +52,25 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 */
 				_getHTML: function(index, nSiblings, depth) {
 					// assumes that if you asked for the HTML it is because you are rendering it
-					var attrs = this.getAttrs(),
+					var self = this,
+						// this is a patch until this:  http://yuilibrary.com/projects/yui3/ticket/2532712  gets fixed.
+						getAttrs = function() {
+							var o = {},
+							i, l, attr,
+ 
+							attrs = Y.Object.keys(self._state.data);
+ 
+							for (i = 0, l = attrs.length; i < l; i++) {
+								attr = attrs[i];
+								o[attr] = self.get(attr);
+							}
+ 
+							return o;
+						},
 						node = this._node,
+						attrs = getAttrs(),
 						s = '', 
-						templ = this.get('template') || this.constructor.TEMPLATE || this.get('root').get('nodeTemplate'),
+						templ = node.template || this.constructor.TEMPLATE || this.get('root').get('nodeTemplate'),
 						childCount = node.children && node.children.length,
 						nodeClasses = [FWM.CNAME_NODE];
 
@@ -200,6 +215,20 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						readOnly: true
 					},
 					/**
+					 * Returns the parent node for this node.
+					 * (Remember to return the copy to the pool when done).
+					 * @attribute parent
+					 * @type {Y.FlyweightManager}
+					 * @readOnly
+					 * 
+					 */
+					parent: {
+						readOnly:true,
+						getter: function() {
+							return this.get('root')._poolFetch(this._node._parent);
+						}
+					},
+					/**
 					 * Template to use on this particular instance.  
 					 * The renderer will default to the static TEMPLATE property of this class 
 					 * (the preferred way) or the nodeTemplate configuration attribute of the root.
@@ -265,14 +294,13 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					depth: {
 						readOnly: true,
 						getter: function () {
-							var ret;
-							this.get('root')._forSomeCfgNode(function(cfgNode, depth) {
-								if (cfgNode === this._node) {
-									ret = depth;
-									return true;
-								}
-							});
-							return ret;
+							var count = 0, 
+								node = this._node;
+							while (node._parent) {
+								count += 1;
+								node = node._parent	
+							};
+							return count-1;
 						}
 					},
 					/**
