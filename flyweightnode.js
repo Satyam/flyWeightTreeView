@@ -174,6 +174,27 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					}
 				},
 				/**
+				 * Generic setter for values stored in the underlying node.
+				 * @method _genericSetter
+				 * @param value {Any} Value to be set.
+				 * @param name {String} Name of the attribute to be set.
+				 * @protected
+				 */
+				_genericSetter: function (value, name) {
+					this._node[name] = value;
+				},
+				/**
+				 * Generic getter for values stored in the underlying node.
+				 * @method _genericGetter
+				 * @param value {Any} Value stored by Attribute (not used).
+				 * @param name {String} Name of the attribute to be read.
+				 * @return {Any} Value read.
+				 * @protected
+				 */
+				_genericGetter: function (value, name) {
+					return this._node[name];
+				},
+				/**
 				 * Sugar method to toggle the expanded state of the node.
 				 * @method toggle
 				 * 
@@ -239,12 +260,8 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 */
 					template: {
 						validator: Lang.isString,
-						getter: function () {
-							return this._node.template;
-						},
-						setter: function (value) {
-							this._node.template = value;
-						}
+						getter: '_genericGetter',
+						setter: '_genericSetter'
 					},
 					/**
 					 * Label for this node. Nodes usually have some textual content, this is the place for it.
@@ -257,9 +274,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						getter: function () {
 							return this._node.label || '';
 						},
-						setter: function (value) {
-							this._node.label = value;
-						}
+						setter: '_genericSetter'
 					},
 					/**
 					 * Id to assign to the DOM element that contains this node.  
