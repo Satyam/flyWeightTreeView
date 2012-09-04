@@ -70,7 +70,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						node = this._node,
 						attrs = getAttrs(),
 						s = '', 
-						templ = node.template || this.constructor.TEMPLATE || this.get('root').get('nodeTemplate'),
+						templ = node.template || this.constructor.TEMPLATE,
 						childCount = node.children && node.children.length,
 						nodeClasses = [FWM.CNAME_NODE];
 
@@ -139,11 +139,11 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * The supplied version defaults to true if the expanded property 
 				 * is not set in the underlying configuration tree.
 				 * It can be overriden to default to false.
-				 * @method _getExpanded
+				 * @method _expandedGetter
 				 * @return {Boolean} The expanded state of the node.
 				 * @protected
 				 */
-				_getExpanded: function () {
+				_expandedGetter: function () {
 					return this._node.expanded !== false;
 				},
 				/**
@@ -151,11 +151,11 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * It renders the child nodes if this branch has never been expanded.
 				 * Then sets the className on the node to the static constants 
 				 * CNAME\_COLLAPSED or CNAME\_EXPANDED from Y.FlyweightManager
-				 * @method _setExpanded
+				 * @method _expandedSetter
 				 * @param value {Boolean} new value for the expanded attribute
 				 * @private
 				 */
-				_setExpanded: function (value) {
+				_expandedSetter: function (value) {
 					this._node.expanded = value = !!value;
 					var s, depth, n = Y.one('#' + this.get('id'));
 					if (value && !this._node._childRendered) {
@@ -181,7 +181,13 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * @protected
 				 */
 				_genericSetter: function (value, name) {
+					if (this._state.data[name].initializing) {
+						// This is to let the initial value pass through
+						return value;
+					}
 					this._node[name] = value;
+					// this is to prevent the initial value to be changed.
+					return  Y.Attribute.INVALID_VALUE
 				},
 				/**
 				 * Generic getter for values stored in the underlying node.
@@ -197,6 +203,22 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					return this._node[name] || value;
 				},
 				/**
+				 * Prevents this instance from being returned to the pool and reused.
+				 * @method hold
+				 */
+				hold: function () {
+					this._node._held = this;
+				},
+				/**
+				 * Allows this instance to be returned to the pool and reused.
+				 * __Important__: This instance should not be used after being released
+				 * @method release
+				 */
+				release: function () {
+					this._node._held = null;
+					this.get('root')._poolReturn(this);
+				},
+				/**
 				 * Sugar method to toggle the expanded state of the node.
 				 * @method toggle
 				 * 
@@ -207,7 +229,9 @@ YUI.add('flyweightnode', function (Y, NAME) {
 			},
 			{
 				/**
-				 * Template string to be used to render this node.  
+				 * Template string to be used to render this node.
+				 * It should be overriden by the subclass.
+				 *    
 				 * It contains the HTML markup for this node plus placeholders,
 				 * enclosed in curly braces, that have access to any of the 
 				 * configuration attributes of this node plus the following
@@ -219,12 +243,13 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * * cname_children: The className for the HTML element enclosing the children of this node.
 				 * The template should always use this className to help it locate the DOM element that contains the children of this node.
 				 * 
-				 * The template should also add the id attribute to the DOM Element representing this node. 
+				 * The template should also add the `id` attribute to the DOM Element representing this node. 
 				 * @property TEMPLATE
 				 * @type {String}
+				 * @default '<div id="{id}" class="{cname_node}"><div class="content">{label}</div><div class="{cname_children}">{children}</div></div>'
 				 * @static
 				 */
-				TEMPLATE: null,
+				TEMPLATE: '<div id="{id}" class="{cname_node}"><div class="content">{label}</div><div class="{cname_children}">{children}</div></div>',
 				ATTRS: {
 					/**
 					 * Reference to the FlyweightManager this node belongs to
@@ -279,26 +304,15 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					},
 					/**
 					 * Id to assign to the DOM element that contains this node.  
-					 * If none is supplied, it will generate one
+					 * If none was supplied, it will generate one
 					 * @attribute id
 					 * @type {Identifier}
 					 * @default Y.guid()
+					 * @readonly
 					 */
 					id: {
-						validator: Lang.isString,
-						getter: function () {
-							var id = this._node.id;
-							if (!id) {
-								id = this._node.id = Y.guid();
-							}
-							return id;
-						},
-						setter: function (value) {
-							if (this._node.id) {
-								return Y.Attribute.INVALID_VALUE;
-							}
-							return (this._node.id = value);
-						}
+						getter: '_genericGetter',
+						readOnly: true
 					},
 					/**
 					 * Returns the depth of this node from the root.
@@ -326,8 +340,8 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 * @default true
 					 */
 					expanded: {
-						getter: '_getExpanded',
-						setter: '_setExpanded'
+						getter: '_expandedGetter',
+						setter: '_expandedSetter'
 					}
 				}
 			}

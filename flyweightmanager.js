@@ -43,17 +43,6 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 */
 		defaultType: {
 			value: 'FlyweightNode'			
-		},
-		/**
-		 * Template tu use as the default to create the markup for any child node.   
-		 * Child nodes use this template if none other is provided.
-		 * See {{#crossLink "FlyweightNode/TEMPLATE"}}{{/crossLink}} for further detauls
-		 * @attribute nodeTemplate
-		 * @type String
-		 * @default '<div id="{id}" class="{cname_node}"><div class="content">{label}</div><div class="{cname_children}">{children}</div></div>'
-		 */
-		nodeTemplate: {
-			value: '<div id="{id}" class="{cname_node}"><div class="content">{label}</div><div class="{cname_children}">{children}</div></div>'
 		}
 	};
 
@@ -131,7 +120,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * to process the tree definition anyway it wants, adding defaults and such
 		 * and to name the tree whatever is suitable.
 		 * For TreeView, the configuration property is named `tree`, for a form, it is named `form`.
-		 * It also sets the `parent` references for all nodes.
+		 * It also sets initial values for some default properties such as `parent` references and `id` for all nodes.
 		 * @method _loadConfig
 		 * @param tree {Object} configuration tree
 		 * @protected
@@ -140,18 +129,20 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			this._tree = {
 				children: Y.clone(tree)
 			};
-			var setParent = function (parent) {
+			var initNodes = function (parent) {
 				Y.Array.each(parent.children, function (child) {
 					child._parent = parent;
-					setParent(child);
+					child.id = child.id || Y.guid();
+					initNodes(child);
 				});
 			};
-			setParent(this._tree);
+			initNodes(this._tree);
 		},
 		/**
 		 * Pulls from the pool an instance of the type declared in the given node
 		 * and slides it over that node.
 		 * If there are no instances of the given type in the pool, a new one will be created via {{#crossLink "_getNode"}}{{/crossLink}}
+		 * If an instance is held (see: {{#crossLink "Y.FlyweightNode/hold"}}{{/crossLink}}), it will be returned instead.
 		 * @method _poolFetch
 		 * @param node {Object} reference to a node within the configuration tree
 		 * @return {Y.FlyweightNode} Usually a subclass of FlyweightNode positioned over the given node
@@ -159,8 +150,11 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 */
 		_poolFetch: function(node) {
 			var pool,
-				fwNode;
+				fwNode = node._held;
 				
+			if (fwNode) {
+				return fwNode;
+			}
 			if (node.type) {
 				pool = this._pool[node.type];
 				if (!pool) {
@@ -178,12 +172,16 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		},
 		/**
 		 * Returns the FlyweightNode instance to the pool.
+		 * Instances held (see: {{#crossLink "Y.FlyweightNode/hold"}}{{/crossLink}}) are never returned.
 		 * @method _poolReturn
 		 * @param fwNode {Y.FlyweightNode} Instance to return.
 		 * @protected
 		 */
 		_poolReturn: function (fwNode) {
-			var pool = this._pool[(fwNode._node && fwNode._node.type) || '_default'];
+			if (fwNode._node._held) {
+				return;
+			}
+			var pool = this._pool[fwNode._node.type || '_default'];
 			if (pool) {
 				pool.push(fwNode);
 			}
