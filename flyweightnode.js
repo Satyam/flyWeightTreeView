@@ -192,7 +192,9 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * @protected
 				 */
 				_genericGetter: function (value, name) {
-					return this._node[name];
+					// since value is never actually set, 
+					// value will always keep the default (initial) value.
+					return this._node[name] || value;
 				},
 				/**
 				 * Sugar method to toggle the expanded state of the node.
@@ -271,10 +273,9 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 */
 					label: {
 						validator: Lang.isString,
-						getter: function () {
-							return this._node.label || '';
-						},
-						setter: '_genericSetter'
+						getter: '_genericGetter',
+						setter: '_genericSetter',
+						value: ''
 					},
 					/**
 					 * Id to assign to the DOM element that contains this node.  
