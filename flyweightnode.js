@@ -60,7 +60,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
  
 							attrs = Y.Object.keys(self._state.data);
  
-							for (i = 0, l = attrs.length; i < l; i++) {
+							for (i = 0, l = attrs.length; i < l; i+=1) {
 								attr = attrs[i];
 								o[attr] = self.get(attr);
 							}
@@ -313,8 +313,8 @@ YUI.add('flyweightnode', function (Y, NAME) {
 								node = this._node;
 							while (node._parent) {
 								count += 1;
-								node = node._parent	
-							};
+								node = node._parent;
+							}
 							return count-1;
 						}
 					},
