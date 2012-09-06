@@ -51,13 +51,13 @@ For example, in the render operation, TreeView calls the `_getHTML` method on th
 Looping over the children of a node is done via the `forEachChild` method, which will fetch a TreeNode instance from the pool, slide it on top of each node and call the provided callback method and return the node instance to the pool. The reason to return it to the pool is that the next node might be of a different type, however, there is space for optimization there.
 
 Events are handled by delegation by TreeView. When an event is detected, TreeView locates the internal node that corresponds to the target, fetches a TreeNode (or the node-object instance according to the type), slides it on top of that internal node and fires a custom event on TreeNode.  
-Here I must set the manager apart from TreeView, which is a subclass of it.  The manager itself listens to no events.  It is each of its subclasses, such as TreeView, that decides what events it cares to listen to and then send to each node-instance object to handle (such as TreeNode).
+The events to listen to are listed in the protected `_events` array and they are all listened by the private `_afterEvent` method which positions a node from the pool and fires a custom event of the same name on the node.
 The event listener on TreeNode needs not be aware of all this.  By the time it responded to the event, the TreeNode has already been positioned on top of the corresponding internal configuration node and it doesn't need to do anything when it is done, the TreeNode instance will be returned to the pool by the manager when it returns from firing the event.
 
 All attribute change events work normally, after all, to change an attribute you have to do it through a TreeNode instance which is already positioned over the internal node so it will listen to the attribute-change event it has just generated.
 Of course, if an internal-node property is changed directly, no TreeNode will ever know so the developer should not do this.
 
-If the developer needs to keep a reference to a TreeNode instance such as those provided by the callback of `forEachChild` or to an event listener, for example, to do an asynchronous operation, the developer should call the `hold` method.  Normally, those are temporary copies and are returned to the pool once the callback is finished. If a reference is kept without telling the manager (TreeView) to hold it, the TreeNode might be positioned elsewhere by the time it is used. Once the `hold` method is called, that instance won't go back to the pool.  To free it, you must call the `release`method.  Once an instance is released, its reference must be considered invalid, just as if it had been destroyed (in fact, it will be returned to the pool and might be repositioned).  When the pool gets a request for an instance of a node that is held, it will return a reference to the same copy held instead of another one from the pool.  If everything goes right, there should never be two active node-object instances on the same internal node.
+If the developer needs to keep a reference to a TreeNode instance such as those provided by the callback of `forEachChild` or to an event listener (for example, to do an asynchronous operation), the developer should call the `hold` method.  Normally, those are temporary copies and are returned to the pool once the callback is finished. If a reference is kept without telling the manager (TreeView) to hold it, the TreeNode might be positioned elsewhere by the time it is used. Once the `hold` method is called, that instance won't go back to the pool.  To free it, you must call the `release` method.  Once an instance is released, its reference must be considered invalid, just as if it had been destroyed (in fact, it will be returned to the pool and might be repositioned).  When the pool gets a request for an instance of a node that is held, it will return a reference to the same copy held instead of another one from the pool.  If everything goes right, there should never be two active node-object instances on the same internal node.
 
 With all nodes of the same type, the pool in the manager will contain no more than the depth of the tree, if all nodes are rendered and none has been retained (not returned).  Thus, the memory footprint is very low.
 
@@ -75,6 +75,8 @@ This demo also contains a sample on how to use this same mechanism to create a f
 
 ------------------------------
 The demo is self-contained except for the YUI files that it downloads from the internet.  You just need to browse the index.html file to see it working.
+
+The demo shows dynamic loading of nodes (via YQL) and how to defined various node types, all subclasses of TreeNode.
 
 It can be seen running here:
 
