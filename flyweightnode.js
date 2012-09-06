@@ -193,6 +193,11 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						}
 					}
 				},
+				/**
+				 * Triggers the dynamic loading of children for this node.
+				 * @method _loadDynamic
+				 * @private
+				 */
 				_loadDynamic: function () {
 					var self = this,
 						root = self._root;
@@ -200,6 +205,11 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					root.get('dynamicLoader').call(root, self, Y.bind(self._dynamicLoadReturn, self));
 					
 				},
+				/**
+				 * Callback for the dynamicLoader method.
+				 * @method _dynamicLoadReturn
+				 * @param response {Array} array of child nodes 
+				 */
 				_dynamicLoadReturn: function (response) {
 					var self = this,
 						node = self._node,
