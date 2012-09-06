@@ -4,6 +4,13 @@
 	padding-left: 18px;
     background: url(treeview-sprite.gif) 0 -4100px no-repeat; 
 }
+.yui3-treeview > ul {
+	background: none;
+	padding-left: 0;
+}
+.yui3-treeview li.yui3-flyweightmanager-loading .yui3-treenode-toggle {
+	background: url(treeview-loading.gif) 0 0 no-repeat;
+}
 .yui3-treeview li {
 	clear: both;
 	overflow: hidden;

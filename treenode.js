@@ -44,8 +44,14 @@ YUI.add('treenode', function (Y, NAME) {
 				 * @private
 				 */
 				_afterClick: function (ev) {
-					console.log('after click', ev, this);
-					this.toggle();
+					var target = ev.domEvent.target;
+					if (target.hasClass(CNAMES.toggle)) {
+						this.toggle();
+					} else if ((target.hasClass(CNAMES.content) || target.hasClass(CNAMES.icon)) && this.get('root').get('toggleOnLabelClick')) {
+						this.toggle();
+					} else if (target.hasClass(CNAMES.selection)) {
+						this.toggleSelection();
+					}
 				}
 
 

@@ -10,6 +10,8 @@
 		<a href="out/index.html">API docs</a>
 		<h1>A Tree:</h1>
 		<div id="container"></div>
+		<h1>A dynamic tree with multiple node types:</h1>
+		<div id="dynTree"></div>
 		<h1>A form:</h1>
 		<div id="form"></div>
 		<script>
@@ -50,9 +52,11 @@
 					}
 				},
 				lang:'es'
-			}).use('treeview', 'form', 'input-field','field-set', function (Y) {
+			}).use('treeview', 'form', 'input-field','field-set','yql', function (Y) {
 				'use strict';
-				var tv = new Y.TreeView({tree: [
+				/*jslint white:true*/
+				var Lang = Y.Lang,
+					tv = new Y.TreeView({tree: [
 					{
 						label:'label 0',
 						children: [
@@ -79,14 +83,166 @@
 					
 				]});
 				tv.render('#container');
-				tv.after('click', function(ev) {
-					console.log( this._poolFetchFromEvent(ev).get('label'));
-					// ev.halt();
-				});
-				tv._forSomeCfgNode(function(cfgNode, depth, index) {
-					console.log(cfgNode.label, depth, index);
-				});
+				var ArtistNode = Y.Base.create(
+					'artist-node',
+					Y.TreeNode,
+					[],
+					{
+						
+					},{
+						TEMPLATE: '<li id="{id}" class="artistnode {cname_node}"><div class="yui3-treenode-toggle"><\/div><div class="yui3-treenode-content"><a href="{url}">{label}<\/a><\/div><ul class="{cname_children}">{children}<\/ul><\/li>',
+						ATTRS: {
+							url: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							},
+							artistId: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							}
+						}
+						
+					}
+				);
+				var AlbumNode = Y.Base.create(
+					'album-node',
+					Y.TreeNode,
+					[],
+					{
+						
+					},{
+						TEMPLATE: '<li id="{id}" class="albumnode {cname_node}"><div class="yui3-treenode-toggle"><\/div><div class="yui3-treenode-content"><a href="{url}">{label}<\/a> ({publisher})<\/div><ul class="{cname_children}">{children}<\/ul><\/li>',
+						ATTRS: {
+							url: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							},
+							albumId: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							},
+							publisher: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							}
+						}
+						
+					}
+				);
+				var TrackNode = Y.Base.create(
+					'track-node',
+					Y.TreeNode,
+					[],
+					{
+						
+					},{
+						// {"Track":{"discNumber":"1","duration":"0","popularity":"3","title":"Karaoke: Crazy For You","trackNumber":"1"}}
+ 						TEMPLATE: '<li id="{id}" class="tracknode {cname_node}"><div class="yui3-treenode-toggle"><\/div><div class="yui3-treenode-content">[disc:{discNumber} - track:{trackNumber} - duration: {duration}]: {label}<\/div><ul class="{cname_children}">{children}<\/ul><\/li>',
+						ATTRS: {
+							discNumber: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							},
+							trackNumber: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							},
+							duration: {
+								setter: '_genericSetter',
+								getter: '_genericGetter'
+							}
+						}
+						
+					}
+				);
 				
+				Y.YQL('select id, name, url from music.artist.search where keyword="Madonna" | sort(field="trackCount", descending="true")', function(response) {
+					if (!response.query.count) {
+						Y.one('#dynTree').setContent('YQL query for Madonna returned no records or failed');
+						return;
+					}
+					var cfg = [],
+						results = response.query.results.Artist || [];
+						
+					if (!Lang.isArray(results)) {
+						results = [results];
+					}
+					Y.Array.each(results, function (entry) {
+						cfg.push( {
+							label: entry.name,
+							artistId: entry.id,
+							url: entry.url,
+							type:ArtistNode
+							
+						});
+					});
+					(new Y.TreeView({
+						dynamicLoader: function (node, callback) {
+							if (node instanceof ArtistNode) {
+								Y.YQL(Lang.sub('select id, title, releaseYear, label, url from music.release.artist where id="{artistId}"   | sort(field="releaseYear", descending="true")', node.getAttrs()), function (response) {
+									if (!response.query.count) {
+										alert(Lang.sub('YQL query for albums by {label} failed or returned no results', node.getAttrs()));
+										callback();
+										return;
+									}
+									var cfg = [],
+										results = response.query.results.Release || [];
+
+									if (!Lang.isArray(results)) {
+										results = [results];
+									};
+									Y.Array.each(results, function (entry) {
+										cfg.push( {
+											label: entry.title || ' ',
+											publisher: entry.label || 'unknown publisher',
+											albumId: entry.id,
+											url: entry.url || '#',
+											type:AlbumNode
+
+										});
+									});
+									callback(cfg);
+									return;
+								});
+								
+							}
+							if (node instanceof AlbumNode)  {
+								Y.YQL(Lang.sub('select Track.discNumber, Track.trackNumber, Track.duration, Track.title, Track.popularity from music.release.id where ids="{albumId}" and response="tracks"', node.getAttrs()), function (response) {
+
+									if (!response.query.count) {
+										alert(Lang.sub('YQL query for album "{label}" failed or returned no results', node.getAttrs()));
+										callback();
+										return;
+									}
+									var cfg = [],
+										results = response.query.results.Release || [];
+
+									if (!Lang.isArray(results)) {
+										results = [results];
+									};
+									Y.Array.each(results, function (entry) {
+										entry = entry.Track;
+									// {"Track":{"discNumber":"1","duration":"0","popularity":"3","title":"Karaoke: Crazy For You","trackNumber":"1"}}
+										cfg.push( {
+											label: entry.title || '- no title -',
+											discNumber: entry.discNumber || 1,
+											trackNumber: entry.trackNumber || '-',
+											duration: entry.duration || '--:--',
+											type:TrackNode,
+											isLeaf:true
+
+										});
+									});
+									callback(cfg);
+									return;
+								});
+								
+							}
+						},
+						tree: cfg
+					})).render('#dynTree');
+			    });				
+
 				var f = new Y.Form({fields: [
 					{
 						label: 'First Field',

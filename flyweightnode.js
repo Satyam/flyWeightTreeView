@@ -14,6 +14,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 	'use strict';
 
 	var Lang = Y.Lang,
+		YArray = Y.Array,
 		FWM = Y.FlyweightManager,
 	/**
 	 * An implementation of the flyweight pattern.  This class should not be instantiated directly.
@@ -35,13 +36,20 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 **/
 				_node:null,
 				/**
+				 * Reference to the TreeView instance this node belongs to.
+				 * It is set by the root and should be considered read-only.
+				 * @property _root
+				 * @type Y.FlyweightManager
+				 * @private
+				 */
+				_root: null,
+				/**
 				 * Returns a string with the markup for this node along that of its children
 				 * produced from its attributes rendered
 				 * via the first template string it finds in these locations:
 				 *
 				 * * It's own {{#crossLink "template"}}{{/crossLink}} configuration attribute
 				 * * The static {{#crossLink "FlyweightNode/TEMPLATE"}}{{/crossLink}} class property
-				 * * The {{#crossLink "FlyweightManager/nodeTemplate"}}{{/crossLink}} attribute in the root object
 				 *
 				 * @method _getHTML
 				 * @param index {Integer} index of this node within the array of siblings
@@ -62,7 +70,10 @@ YUI.add('flyweightnode', function (Y, NAME) {
  
 							for (i = 0, l = attrs.length; i < l; i+=1) {
 								attr = attrs[i];
-								o[attr] = self.get(attr);
+								// Ojo, estoy si hay que mantenerlo
+								if (['root', 'parent'].indexOf(attr) === -1) {
+									o[attr] = self.get(attr);
+								}
 							}
  
 							return o;
@@ -77,7 +88,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					node._rendered = true;
 					if (childCount) {
 						if (attrs.expanded) {
-							node._childRendered = true;
+							node._childrenRendered = true;
 							this.forEachChild( function (fwNode, index, array) {
 								s += fwNode._getHTML(index, array.length, depth+1);
 							});
@@ -86,7 +97,11 @@ YUI.add('flyweightnode', function (Y, NAME) {
 							nodeClasses.push(FWM.CNAME_COLLAPSED);
 						}
 					} else {
-						nodeClasses.push(FWM.CNAME_NOCHILDREN);
+						if (this._root.get('dynamicLoader') && !node.isLeaf) {
+							nodeClasses.push(FWM.CNAME_COLLAPSED);
+						} else {
+							nodeClasses.push(FWM.CNAME_NOCHILDREN);
+						}
 					}
 					if (index === 0) {
 						nodeClasses.push(FWM.CNAME_FIRSTCHILD);
@@ -120,12 +135,12 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * @param scope {object} The falue of this for the function.  Defaults to the parent.
 				**/
 				forEachChild: function(fn, scope) {
-					var root = this.get('root'),
+					var root = this._root,
 						children = this._node.children,
 						child, ret;
 					scope = scope || this;
 					if (children && children.length) {
-						Y.Array.each(children, function (node, index, array) {
+						YArray.each(children, function (node, index, array) {
 							child = root._poolFetch(node);
 							ret = fn.call(scope, child, index, array);
 							root._poolReturn(child);
@@ -156,22 +171,74 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * @private
 				 */
 				_expandedSetter: function (value) {
-					this._node.expanded = value = !!value;
-					var s, depth, n = Y.one('#' + this.get('id'));
-					if (value && !this._node._childRendered) {
-						this._node._childRendered = true;
-						s = '';
-						depth = this.get('depth');
-						this.forEachChild(function (fwNode, index, array) {
-							s += fwNode._getHTML(index, array.length, depth + 1);
-						});
-						n.one('.' + FWM.CNAME_CHILDREN).setContent(s);
+					var self = this,
+						node = self._node,
+						root = self._root,
+						el = Y.one('#' + node.id),
+						dynLoader = root.get('dynamicLoader');
+						
+					node.expanded = value = !!value;
+					if (dynLoader && !node.isLeaf && (!node.children  || !node.children.length)) {
+						this._loadDynamic();
+						return;
 					}
-					if (value) {
-						n.replaceClass(FWM.CNAME_COLLAPSED, FWM.CNAME_EXPANDED);
+					if (node.children && node.children.length) {
+						if (value) {
+							if (!node._childrenRendered) {
+								self._renderChildren();
+							}
+							el.replaceClass(FWM.CNAME_COLLAPSED, FWM.CNAME_EXPANDED);
+						} else {
+							el.replaceClass(FWM.CNAME_EXPANDED, FWM.CNAME_COLLAPSED);
+						}
+					}
+				},
+				_loadDynamic: function () {
+					var self = this,
+						root = self._root;
+					Y.one('#' + this.get('id')).replaceClass(FWM.CNAME_COLLAPSED, FWM.CNAME_LOADING);
+					root.get('dynamicLoader').call(root, self, Y.bind(self._dynamicLoadReturn, self));
+					
+				},
+				_dynamicLoadReturn: function (response) {
+					var self = this,
+						node = self._node,
+						root = self._root,
+						initNodes = function (children) {
+							YArray.each(children, function (child) {
+								child._parent = node;
+								child._root = root;
+								child.id = child.id || Y.guid();
+								initNodes(child.children || []);
+							});
+						};
+
+					if (response) {
+						initNodes(response);
+
+						node.children = response;
+						self._renderChildren();
 					} else {
-						n.replaceClass(FWM.CNAME_EXPANDED, FWM.CNAME_COLLAPSED);
+						node.isLeaf = true;
 					}
+					// isLeaf might have been set in the response, not just in the line above.
+					Y.one('#' + node.id).replaceClass(FWM.CNAME_LOADING, (node.isLeaf?FWM.CNAME_NOCHILDREN:FWM.CNAME_EXPANDED));
+				},
+				/**
+				 * Renders the children of this node.  
+				 * It the children had been rendered, they will be replaced.
+				 * @method _renderChildren
+				 * @private
+				 */
+				_renderChildren: function () {
+					var s = '',
+						node = this._node,
+						depth = this.get('depth');
+					node._childrenRendered = true;
+					this.forEachChild(function (fwNode, index, array) {
+						s += fwNode._getHTML(index, array.length, depth + 1);
+					});
+					Y.one('#' + node.id + ' .' + FWM.CNAME_CHILDREN).setContent(s);
 				},
 				/**
 				 * Generic setter for values stored in the underlying node.
@@ -187,7 +254,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					}
 					this._node[name] = value;
 					// this is to prevent the initial value to be changed.
-					return  Y.Attribute.INVALID_VALUE
+					return  Y.Attribute.INVALID_VALUE;
 				},
 				/**
 				 * Generic getter for values stored in the underlying node.
@@ -211,12 +278,13 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				},
 				/**
 				 * Allows this instance to be returned to the pool and reused.
+				 * 
 				 * __Important__: This instance should not be used after being released
 				 * @method release
 				 */
 				release: function () {
 					this._node._held = null;
-					this.get('root')._poolReturn(this);
+					this._root._poolReturn(this);
 				},
 				/**
 				 * Sugar method to toggle the expanded state of the node.
@@ -260,7 +328,10 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 */
 
 					root: {
-						readOnly: true
+						readOnly: true,
+						getter: function() {
+							return this._root;
+						}
 					},
 					/**
 					 * Returns the parent node for this node.
@@ -273,7 +344,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					parent: {
 						readOnly:true,
 						getter: function() {
-							return this.get('root')._poolFetch(this._node._parent);
+							return this._root._poolFetch(this._node._parent);
 						}
 					},
 					/**
@@ -308,7 +379,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 * @attribute id
 					 * @type {Identifier}
 					 * @default Y.guid()
-					 * @readonly
+					 * @readOnly
 					 */
 					id: {
 						getter: '_genericGetter',

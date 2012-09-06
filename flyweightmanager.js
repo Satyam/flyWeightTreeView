@@ -9,6 +9,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 	'use strict';
 	var Lang = Y.Lang,
 		DOT = '.',
+		DEFAULT_POOL = '_default',
 		getCName = Y.ClassNameManager.getClassName,
 		cName = function (name) {
 			return getCName(NAME, name);
@@ -20,6 +21,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		CNAME_NOCHILDREN = cName('no-children'),
 		CNAME_FIRSTCHILD = cName('first-child'),
 		CNAME_LASTCHILD = cName('last-child'),
+		CNAME_LOADING = cName('loading'),
 	
 	/**
 	 * Extension to handle its child nodes by using the flyweight pattern.
@@ -43,58 +45,87 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 */
 		defaultType: {
 			value: 'FlyweightNode'			
+		},
+		/**
+		 * Function used to load the nodes dynamically.
+		 * Function will run in the scope of the FlyweightManager instance and will
+		 * receive:
+		 * 
+		 * * node {Y.FlyweightNode} reference to the parent of the children to be loaded.
+		 * * callback {Function} function to call with the configuration info for the children.
+		 * 
+		 * The function shall fetch the nodes and create a configuration object 
+		 * much like the one a whole tree might receive.  
+		 * It is not limited to just one level of nodes, it might contain children elements as well.
+		 * When the data is processed, it should call the callback with the configuration object.
+		 * The function is responsible of handling any errors.
+		 * If the the callback is called with no arguments, the parent node will be marked as having no children.
+		 * @attribute dynamicLoader
+		 * @type {Function}
+		 * @default null
+		 */
+		dynamicLoader: {
+			validator: Lang.isFunction,
+			value: null
 		}
 	};
 
 	/**
-	 * Constant to use as the class name for the DOM element representing the node.
+	 * CCS className constant to use as the class name for the DOM element representing the node.
 	 * @property CNAME\_NODE
 	 * @type String
 	 * @static
 	 */
 	FWM.CNAME_NODE = CNAME_NODE;
 	/**
-	 * Constant to use as the class name for the DOM element that will containe the children of this node.
+	 * CCS className constant to use as the class name for the DOM element that will containe the children of this node.
 	 * @property CNAME\_CHILDREN
 	 * @type String
 	 * @static
 	 */
 	FWM.CNAME_CHILDREN = CNAME_CHILDREN;
 	/**
-	 * Constant added to the DOM element for this node when its state is not expanded.
+	 * CCS className constant added to the DOM element for this node when its state is not expanded.
 	 * @property CNAME\_COLLAPSED
 	 * @type String
 	 * @static
 	 */
 	FWM.CNAME_COLLAPSED = CNAME_COLLAPSED;
 	/**
-	 * Constant added to the DOM element for this node when its state is expanded.
+	 * CCS className constant added to the DOM element for this node when its state is expanded.
 	 * @property CNAME\_EXPANDED
 	 * @type String
 	 * @static
 	 */
 	FWM.CNAME_EXPANDED = CNAME_EXPANDED;
 	/**
-	 * Constant added to the DOM element for this node when it has no children.
+	 * CCS className constant added to the DOM element for this node when it has no children.
 	 * @property CNAME\_NOCHILDREN
 	 * @type String
 	 * @static
 	 */
 	FWM.CNAME_NOCHILDREN = CNAME_NOCHILDREN;
 	/**
-	 * Constant added to the DOM element for this node when it is the first in the group.
+	 * CCS className constant added to the DOM element for this node when it is the first in the group.
 	 * @property CNAME\_FIRSTCHILD
 	 * @type String
 	 * @static
 	 */
 	FWM.CNAME_FIRSTCHILD = CNAME_FIRSTCHILD;
 	/**
-	 * Constant added to the DOM element for this node when it is the last in the group.
+	 * CCS className constant added to the DOM element for this node when it is the last in the group.
 	 * @property CNAME\_LASTCHILD
 	 * @type String
 	 * @static
 	 */
 	FWM.CNAME_LASTCHILD = CNAME_LASTCHILD;
+	/**
+	 * CCS className constant added to the DOM element for this node when dynamically loading its children.
+	 * @property CNAME\_LOADING
+	 * @type String
+	 * @static
+	 */
+	FWM.CNAME_LOADING = CNAME_LOADING;
 
 	FWM.prototype = {
 		/**
@@ -114,6 +145,16 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * @private
 		 */
 		_pool: null,
+		/**
+		 * List of events to be listened for at the outer contained and fired again
+		 * at the node once positioned over the source node.
+		 * @property _events
+		 * @type Array of strings
+		 * @protected
+		 * @default null
+		 */
+		_events: null,
+		
 		/**
 		 * Method to load the configuration tree.
 		 * This is not done in the constructor so as to allow the subclass 
@@ -137,6 +178,25 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 				});
 			};
 			initNodes(this._tree);
+			if (this._events) {
+				Y.Array.each(this._events, function (event) {
+					this.after(event, this._afterEvent, this);
+				}, this);
+			}
+		},
+		/** Generic event listener for events listed in the {{#crossLink "_events"}}{{/crossLink}} array.
+		 *  It will locate the node that caused the event, slide a suitable instance on it and fire the
+		 *  same event on that node.
+		 *  @method _afterEvent
+		 *  @param ev {EventFacade} Event facade as produced by the event
+		 *  @private
+		 */
+		_afterEvent: function (ev) {
+			var node = this._poolFetchFromEvent(ev);
+			if (node) {
+				node.fire(ev.type.split(':')[1], {domEvent:ev.domEvent});
+				this._poolReturn(node);			
+			}
 		},
 		/**
 		 * Pulls from the pool an instance of the type declared in the given node
@@ -150,18 +210,19 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 */
 		_poolFetch: function(node) {
 			var pool,
-				fwNode = node._held;
+				fwNode = node._held,
+				type = node.type || DEFAULT_POOL;
 				
 			if (fwNode) {
 				return fwNode;
 			}
-			if (node.type) {
-				pool = this._pool[node.type];
-				if (!pool) {
-					pool = this._pool[node.type] = [];
-				}
-			} else {
-				pool = this._pool._default;
+			if (Lang.isObject(type)) {
+				// If the type of object cannot be identified, return a default type.
+				type = type.NAME || DEFAULT_POOL;
+			}
+			pool = this._pool[type] || [];
+			if (pool === undefined) {
+				pool = this._pool[type] = [];
 			}
 			if (pool.length) {
 				fwNode = pool.pop();
@@ -181,7 +242,16 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			if (fwNode._node._held) {
 				return;
 			}
-			var pool = this._pool[fwNode._node.type || '_default'];
+			var pool,
+				type = fwNode._node.type || DEFAULT_POOL;
+			if (Lang.isObject(type)) {
+				type = type.NAME;
+				if (!type) {
+					// Don't know where to put it, drop it.
+					return;
+				}
+			}
+			pool = this._pool[type];
 			if (pool) {
 				pool.push(fwNode);
 			}
@@ -205,7 +275,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			if (Type) {
 				newNode = new Type();
 				if (newNode instanceof Y.FlyweightNode) {
-					newNode._set('root', this);
+					newNode._root =  this;
 					newNode._slideTo(node);
 					return newNode;
 				}
