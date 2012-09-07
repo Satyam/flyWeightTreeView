@@ -70,10 +70,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
  
 							for (i = 0, l = attrs.length; i < l; i+=1) {
 								attr = attrs[i];
-								// Ojo, estoy si hay que mantenerlo
-								if (['root', 'parent'].indexOf(attr) === -1) {
-									o[attr] = self.get(attr);
-								}
+								o[attr] = self.get(attr);
 							}
  
 							return o;
@@ -281,28 +278,77 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				},
 				/**
 				 * Prevents this instance from being returned to the pool and reused.
+				 * Remember to {{#crossLink "release"}}{{/crossLink}} this instance when no longer needed.
 				 * @method hold
+				 * @chainable
 				 */
 				hold: function () {
-					this._node._held = this;
+					return (this._node._held = this);
 				},
 				/**
 				 * Allows this instance to be returned to the pool and reused.
 				 * 
 				 * __Important__: This instance should not be used after being released
 				 * @method release
+				 * @chainable
 				 */
 				release: function () {
 					this._node._held = null;
 					this._root._poolReturn(this);
+					return this;
 				},
+				/**
+				 * Returns the parent node for this node or null if none exists.
+				 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.  
+				 * Remember to release the copy to the pool when done.
+				 * @method getParent
+				 * @return Y.FlyweightNode
+				 */
+				getParent: function() {
+					var node = this._node._parent;
+					return (node?this._root._poolFetch(node):null);
+				},
+				/**
+				 * Returns the next sibling node for this node or null if none exists.
+				 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.  
+				 * Remember to release the copy to the pool when done.
+				 * @method getNextSibling
+				 * @return Y.FlyweightNode
+				 */
+				getNextSibling: function() {
+					var parent = this._node._parent,
+						siblings = parent && parent.children || [],
+						index = siblings.indexOf(this) + 1;
+					if (index === 0 || index > siblings.length) {
+						return null;
+					}
+					return this._root._poolFetch(siblings[index]);
+				},
+				/**
+				 * Returns the previous sibling node for this node or null if none exists.
+				 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.  
+				 * Remember to release the copy to the pool when done.
+				 * @method getPreviousSibling
+				 * @return Y.FlyweightNode
+				 */
+				getPreviousSibling: function() {
+					var parent = this._node._parent,
+						siblings = parent && parent.children || [],
+						index = siblings.indexOf(this) - 1;
+					if (index < 0) {
+						return null;
+					}
+					return this._root._poolFetch(siblings[index]);
+				},
+				
 				/**
 				 * Sugar method to toggle the expanded state of the node.
 				 * @method toggle
-				 * 
+				 * @chainable
 				 */
 				toggle: function() {
 					this.set('expanded', !this.get('expanded'));
+					return this;
 				}
 			},
 			{
@@ -343,20 +389,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 							return this._root;
 						}
 					},
-					/**
-					 * Returns the parent node for this node.
-					 * (Remember to return the copy to the pool when done).
-					 * @attribute parent
-					 * @type {Y.FlyweightManager}
-					 * @readOnly
-					 * 
-					 */
-					parent: {
-						readOnly:true,
-						getter: function() {
-							return this._root._poolFetch(this._node._parent);
-						}
-					},
+
 					/**
 					 * Template to use on this particular instance.  
 					 * The renderer will default to the static TEMPLATE property of this class 

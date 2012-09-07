@@ -146,14 +146,14 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 */
 		_pool: null,
 		/**
-		 * List of events to be listened for at the outer contained and fired again
+		 * List of dom events to be listened for at the outer contained and fired again
 		 * at the node once positioned over the source node.
-		 * @property _events
+		 * @property _domEvents
 		 * @type Array of strings
 		 * @protected
 		 * @default null
 		 */
-		_events: null,
+		_domEvents: null,
 		
 		/**
 		 * Method to load the configuration tree.
@@ -178,20 +178,20 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 				});
 			};
 			initNodes(this._tree);
-			if (this._events) {
-				Y.Array.each(this._events, function (event) {
-					this.after(event, this._afterEvent, this);
+			if (this._domEvents) {
+				Y.Array.each(this._domEvents, function (event) {
+					this.after(event, this._afterDomEvent, this);
 				}, this);
 			}
 		},
-		/** Generic event listener for events listed in the {{#crossLink "_events"}}{{/crossLink}} array.
+		/** Generic event listener for DOM events listed in the {{#crossLink "_domEvents"}}{{/crossLink}} array.
 		 *  It will locate the node that caused the event, slide a suitable instance on it and fire the
 		 *  same event on that node.
 		 *  @method _afterEvent
 		 *  @param ev {EventFacade} Event facade as produced by the event
 		 *  @private
 		 */
-		_afterEvent: function (ev) {
+		_afterDomEvent: function (ev) {
 			var node = this._poolFetchFromEvent(ev);
 			if (node) {
 				node.fire(ev.type.split(':')[1], {domEvent:ev.domEvent});

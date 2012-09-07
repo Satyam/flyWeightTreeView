@@ -46,7 +46,7 @@ YUI.add('treeview', function (Y, NAME) {
 				 * `tree` contains the tree configuration.
 				 */
 				initializer: function (config) {
-					this._events = ['click'];
+					this._domEvents = ['click'];
 					this._loadConfig(config.tree);
 				},
 				/**
