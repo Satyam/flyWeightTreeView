@@ -61,7 +61,7 @@ If the developer needs to keep a reference to a TreeNode instance such as those 
 
 With all nodes of the same type, the pool in the manager will contain no more than the depth of the tree, if all nodes are rendered and none has been retained (not returned).  Thus, the memory footprint is very low.
 
-TreeNode has two type of attributes, those that are global, such as `'root'` and those that are dependent on the internal configuration object.  The developer of subclasses of the node-object classes such as TreeNode should be careful to handle them differently.  The regular attributes will not change when TreeNode is slid on top of a node.  Node-dependent attributes need getters and setters to look for the value in the internal configuration object.  TreeNode has both a generic getter and setter that do this.  For node-dependent attributes, the `valueFn` attribute setting does not work.
+TreeNode has two type of attributes, those that are global, such as `'root'` and those that are dependent on the internal configuration object.  The developer of subclasses of the node-object classes such as TreeNode should be careful to handle them differently.  The regular attributes will not change when TreeNode is slid on top of a node.  Node-dependent attributes need to know where to find their values. TreeView takes care of both types of attributes.  It is up to the developer to tell it which is which.  To do that, regular not node-dependent attributes should have the `_bypassProxy` property set to true.  For node-dependent attributes, the `valueFn` attribute setting does not work.
 
 ---------------------------
 The original proposal is described in these posts:
