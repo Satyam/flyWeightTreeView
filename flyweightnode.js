@@ -120,6 +120,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 */
 				_slideTo: function (node) {
 					this._node = node;
+					this._stateProxy = node;
 				},
 				/**
 				 * Executes the given function on each of the child nodes of this node.
@@ -210,20 +211,12 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				_dynamicLoadReturn: function (response) {
 					var self = this,
 						node = self._node,
-						root = self._root,
-						initNodes = function (children) {
-							YArray.each(children, function (child) {
-								child._parent = node;
-								child._root = root;
-								child.id = child.id || Y.guid();
-								initNodes(child.children || []);
-							});
-						};
+						root = self._root;
 
 					if (response) {
-						initNodes(response);
 
 						node.children = response;
+						root._initNodes(node);
 						self._renderChildren();
 					} else {
 						node.isLeaf = true;
@@ -246,35 +239,6 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						s += fwNode._getHTML(index, array.length, depth + 1);
 					});
 					Y.one('#' + node.id + ' .' + FWM.CNAME_CHILDREN).setContent(s);
-				},
-				/**
-				 * Generic setter for values stored in the underlying node.
-				 * @method _genericSetter
-				 * @param value {Any} Value to be set.
-				 * @param name {String} Name of the attribute to be set.
-				 * @protected
-				 */
-				_genericSetter: function (value, name) {
-					if (this._state.data[name].initializing) {
-						// This is to let the initial value pass through
-						return value;
-					}
-					this._node[name] = value;
-					// this is to prevent the initial value to be changed.
-					return  Y.Attribute.INVALID_VALUE;
-				},
-				/**
-				 * Generic getter for values stored in the underlying node.
-				 * @method _genericGetter
-				 * @param value {Any} Value stored by Attribute (not used).
-				 * @param name {String} Name of the attribute to be read.
-				 * @return {Any} Value read.
-				 * @protected
-				 */
-				_genericGetter: function (value, name) {
-					// since value is never actually set, 
-					// value will always keep the default (initial) value.
-					return this._node[name] || value;
 				},
 				/**
 				 * Prevents this instance from being returned to the pool and reused.
@@ -317,7 +281,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 */
 				getNextSibling: function() {
 					var parent = this._node._parent,
-						siblings = parent && parent.children || [],
+						siblings = (parent && parent.children) || [],
 						index = siblings.indexOf(this) + 1;
 					if (index === 0 || index > siblings.length) {
 						return null;
@@ -333,7 +297,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 */
 				getPreviousSibling: function() {
 					var parent = this._node._parent,
-						siblings = parent && parent.children || [],
+						siblings = (parent && parent.children) || [],
 						index = siblings.indexOf(this) - 1;
 					if (index < 0) {
 						return null;
@@ -384,6 +348,8 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 */
 
 					root: {
+						// Important: those attributes that don't map to the tree configuration need to have _bypassProxy: true
+						_bypassProxy: true,
 						readOnly: true,
 						getter: function() {
 							return this._root;
@@ -400,9 +366,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 * @default undefined
 					 */
 					template: {
-						validator: Lang.isString,
-						getter: '_genericGetter',
-						setter: '_genericSetter'
+						validator: Lang.isString
 					},
 					/**
 					 * Label for this node. Nodes usually have some textual content, this is the place for it.
@@ -412,8 +376,6 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 */
 					label: {
 						validator: Lang.isString,
-						getter: '_genericGetter',
-						setter: '_genericSetter',
 						value: ''
 					},
 					/**
@@ -425,7 +387,6 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 * @readOnly
 					 */
 					id: {
-						getter: '_genericGetter',
 						readOnly: true
 					},
 					/**
@@ -436,6 +397,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 * @readOnly
 					 */
 					depth: {
+						_bypassProxy: true,
 						readOnly: true,
 						getter: function () {
 							var count = 0, 
@@ -454,6 +416,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 * @default true
 					 */
 					expanded: {
+						_bypassProxy: true,
 						getter: '_expandedGetter',
 						setter: '_expandedSetter'
 					}

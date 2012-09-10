@@ -20,6 +20,8 @@
 		<div id="form"></div>
 		<script>
 			YUI({
+				filter:'raw',
+				combine: false,
 				groups: {
 					local: {
 						base:'./',
@@ -100,12 +102,8 @@
 						TEMPLATE: '<li id="{id}" class="artistnode {cname_node}"><div class="yui3-treenode-toggle"><\/div><div class="yui3-treenode-content"><a href="{url}">{label}<\/a><\/div><ul class="{cname_children}">{children}<\/ul><\/li>',
 						ATTRS: {
 							url: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							},
 							artistId: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							}
 						}
 						
@@ -121,16 +119,10 @@
 						TEMPLATE: '<li id="{id}" class="albumnode {cname_node}"><div class="yui3-treenode-toggle"><\/div><div class="yui3-treenode-content"><a href="{url}">{label}<\/a> ({publisher})<\/div><ul class="{cname_children}">{children}<\/ul><\/li>',
 						ATTRS: {
 							url: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							},
 							albumId: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							},
 							publisher: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							}
 						}
 						
@@ -144,19 +136,13 @@
 						
 					},{
 						// {"Track":{"discNumber":"1","duration":"0","popularity":"3","title":"Karaoke: Crazy For You","trackNumber":"1"}}
- 						TEMPLATE: '<li id="{id}" class="tracknode {cname_node}"><div class="yui3-treenode-toggle"><\/div><div class="yui3-treenode-content">[disc:{discNumber} - track:{trackNumber} - duration: {duration}]: {label}<\/div><ul class="{cname_children}">{children}<\/ul><\/li>',
+						TEMPLATE: '<li id="{id}" class="tracknode {cname_node}"><div class="yui3-treenode-toggle"><\/div><div class="yui3-treenode-content">[disc:{discNumber} - track:{trackNumber} - duration: {duration}]: {label}<\/div><ul class="{cname_children}">{children}<\/ul><\/li>',
 						ATTRS: {
 							discNumber: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							},
 							trackNumber: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							},
 							duration: {
-								setter: '_genericSetter',
-								getter: '_genericGetter'
 							}
 						}
 						
@@ -197,7 +183,7 @@
 
 									if (!Lang.isArray(results)) {
 										results = [results];
-									};
+									}
 									Y.Array.each(results, function (entry) {
 										cfg.push( {
 											label: entry.title || ' ',
@@ -226,7 +212,7 @@
 
 									if (!Lang.isArray(results)) {
 										results = [results];
-									};
+									}
 									Y.Array.each(results, function (entry) {
 										entry = entry.Track;
 									// {"Track":{"discNumber":"1","duration":"0","popularity":"3","title":"Karaoke: Crazy For You","trackNumber":"1"}}

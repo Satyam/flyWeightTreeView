@@ -29,9 +29,8 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 	 * @constructor
 	 */
 		FWM = function () {
-			this._pool = {
-				_default: []
-			};
+			this._initialValues = {};
+			this._pool = {};
 		};
 	
 	FWM.ATTRS = {
@@ -146,6 +145,14 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 */
 		_pool: null,
 		/**
+		 * Initial values for node attributes.  
+		 * Contains default values for each node type, indexed by node type and attribute name.
+		 * @property _initialValues
+		 * @type Object
+		 * @private
+		 */
+		_initialValues: null,
+		/**
 		 * List of dom events to be listened for at the outer contained and fired again
 		 * at the node once positioned over the source node.
 		 * @property _domEvents
@@ -167,22 +174,56 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * @protected
 		 */
 		_loadConfig: function (tree) {
-			this._tree = {
+			var self = this;
+			self._tree = {
 				children: Y.clone(tree)
 			};
-			var initNodes = function (parent) {
-				Y.Array.each(parent.children, function (child) {
-					child._parent = parent;
-					child.id = child.id || Y.guid();
-					initNodes(child);
+			self._initNodes(this._tree);
+			if (self._domEvents) {
+				Y.Array.each(self._domEvents, function (event) {
+					self.after(event, self._afterDomEvent, self);
 				});
-			};
-			initNodes(this._tree);
-			if (this._domEvents) {
-				Y.Array.each(this._domEvents, function (event) {
-					this.after(event, this._afterDomEvent, this);
-				}, this);
 			}
+		},
+		/** Initializes the node configuration with default values and management info.
+		 * @method _initNodes
+		 * @param parent {Object} Parent of the nodes to be set
+		 * @private
+		 */
+		_initNodes: function (parent) {
+			var self = this, 
+				fwNode,
+				type,
+				defaultValues,
+				name,
+				value;
+			Y.Array.each(parent.children, function (child) {
+				type = child.type || DEFAULT_POOL;
+				defaultValues = self._initialValues[type];
+				if (!defaultValues) {
+					defaultValues = {type:child.type};
+					fwNode = self._poolFetch(defaultValues);
+						for (name in fwNode._attrs) {
+						if (fwNode._attrs.hasOwnProperty(name) && ['initialized','destroyed'].indexOf(name) === -1) {
+							value = fwNode._state.get(name,'value');
+							if (value !== undefined) {
+								defaultValues[name] =  value;
+								fwNode._state.remove(name,'value');
+							}
+						}
+					}
+					self._initialValues[type] = defaultValues;
+					self._poolReturn(fwNode);
+				}
+				Y.Object.each(defaultValues, function(value, name) {
+					if (child[name] === undefined) {
+						child[name] = value;
+					}
+				});
+				child._parent = parent;
+				child.id = child.id || Y.guid();
+				self._initNodes(child);
+			});
 		},
 		/** Generic event listener for DOM events listed in the {{#crossLink "_domEvents"}}{{/crossLink}} array.
 		 *  It will locate the node that caused the event, slide a suitable instance on it and fire the
@@ -220,7 +261,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 				// If the type of object cannot be identified, return a default type.
 				type = type.NAME || DEFAULT_POOL;
 			}
-			pool = this._pool[type] || [];
+			pool = this._pool[type];
 			if (pool === undefined) {
 				pool = this._pool[type] = [];
 			}
@@ -275,6 +316,10 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 			if (Type) {
 				newNode = new Type();
 				if (newNode instanceof Y.FlyweightNode) {
+					// I need to do this otherwise Attribute will initialize the real node with default values
+					newNode._slideTo({});
+					newNode.getAttrs();
+					// That's it (see above)
 					newNode._root =  this;
 					newNode._slideTo(node);
 					return newNode;
