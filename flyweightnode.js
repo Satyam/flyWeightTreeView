@@ -376,7 +376,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					 */
 					label: {
 						validator: Lang.isString,
-						value: ''
+						value: 'xxx'
 					},
 					/**
 					 * Id to assign to the DOM element that contains this node.  
