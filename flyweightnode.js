@@ -39,7 +39,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * Reference to the TreeView instance this node belongs to.
 				 * It is set by the root and should be considered read-only.
 				 * @property _root
-				 * @type Y.FlyweightManager
+				 * @type FlyweightManager
 				 * @private
 				 */
 				_root: null,
@@ -78,15 +78,21 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						node = this._node,
 						attrs = getAttrs(),
 						s = '', 
-						templ = node.template || this.constructor.TEMPLATE,
+						templ = node.template,
 						childCount = node.children && node.children.length,
-						nodeClasses = [FWM.CNAME_NODE];
+						nodeClasses = [FWM.CNAME_NODE],
+						superConstructor = this.constructor;
+				
+					while (!templ) {
+						templ = superConstructor.TEMPLATE;
+						superConstructor = superConstructor.superclass.constructor;
+					}
 
 					node._rendered = true;
 					if (childCount) {
 						if (attrs.expanded) {
 							node._childrenRendered = true;
-							this.forEachChild( function (fwNode, index, array) {
+							this.forSomeChildren( function (fwNode, index, array) {
 								s += fwNode._getHTML(index, array.length, depth+1);
 							});
 							nodeClasses.push(FWM.CNAME_EXPANDED);
@@ -102,7 +108,8 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					}
 					if (index === 0) {
 						nodeClasses.push(FWM.CNAME_FIRSTCHILD);
-					} else if (index === nSiblings - 1) {
+					}
+					if (index === nSiblings - 1) {
 						nodeClasses.push(FWM.CNAME_LASTCHILD);
 					}
 					attrs.children = s;
@@ -124,27 +131,30 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				},
 				/**
 				 * Executes the given function on each of the child nodes of this node.
-				 * @method forEachChild
+				 * Quits if the function returns true.
+				 * @method forSomeChildren
 				 * @param fn {Function} Function to be executed on each node
-				 *		@param fn.child {Y.FlyweightNode} Instance of a suitable subclass of FlyweightNode, 
+				 *		@param fn.child {FlyweightNode} Instance of a suitable subclass of FlyweightNode, 
 				 *		positioned on top of the child node
 				 *		@param fn.index {Integer} Index of this child within the array of children
 				 *		@param fn.array {Array} array containing itself and its siblings
 				 * @param scope {object} The falue of this for the function.  Defaults to the parent.
-				**/
-				forEachChild: function(fn, scope) {
+				 * @return {Boolean} true if any of the function calls returned true.
+				 */
+				forSomeChildren: function(fn, scope) {
 					var root = this._root,
 						children = this._node.children,
 						child, ret;
 					scope = scope || this;
 					if (children && children.length) {
-						YArray.each(children, function (node, index, array) {
+						return YArray.some(children, function (node, index, array) {
 							child = root._poolFetch(node);
 							ret = fn.call(scope, child, index, array);
 							root._poolReturn(child);
 							return ret;
 						});
 					}
+					return false
 				},
 				/**
 				 * Getter for the expanded configuration attribute.
@@ -235,7 +245,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 						node = this._node,
 						depth = this.get('depth');
 					node._childrenRendered = true;
-					this.forEachChild(function (fwNode, index, array) {
+					this.forSomeChildren(function (fwNode, index, array) {
 						s += fwNode._getHTML(index, array.length, depth + 1);
 					});
 					Y.one('#' + node.id + ' .' + FWM.CNAME_CHILDREN).setContent(s);
@@ -266,7 +276,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.  
 				 * Remember to release the copy to the pool when done.
 				 * @method getParent
-				 * @return Y.FlyweightNode
+				 * @return FlyweightNode
 				 */
 				getParent: function() {
 					var node = this._node._parent;
@@ -277,7 +287,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.  
 				 * Remember to release the copy to the pool when done.
 				 * @method getNextSibling
-				 * @return Y.FlyweightNode
+				 * @return FlyweightNode
 				 */
 				getNextSibling: function() {
 					var parent = this._node._parent,
@@ -293,7 +303,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 				 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.  
 				 * Remember to release the copy to the pool when done.
 				 * @method getPreviousSibling
-				 * @return Y.FlyweightNode
+				 * @return FlyweightNode
 				 */
 				getPreviousSibling: function() {
 					var parent = this._node._parent,
@@ -342,7 +352,7 @@ YUI.add('flyweightnode', function (Y, NAME) {
 					/**
 					 * Reference to the FlyweightManager this node belongs to
 					 * @attribute root
-					 * @type {Y.FlyweightManager}
+					 * @type {FlyweightManager}
 					 * @readOnly
 					 * 
 					 */

@@ -3,7 +3,8 @@ flyWeightTreeView
 
 An implementation of a YUI3 TreeView based on the FlyWeight pattern.
 
-(A YUI Gallery version is available here: http://yuilibrary.com/gallery/show/flyweight-tree and http://yuilibrary.com/gallery/show/fwt-treeview)
+This version is __deprecated__ the one being maintained is the YUI Gallery version available here: http://yuilibrary.com/gallery/show/flyweight-tree and http://yuilibrary.com/gallery/show/fwt-treeview
+The description that follows is still valid so, feel free to carry on reading.
 
 Ok, the name might not be the best and my implementation of the pattern not accurate, but it works like this:
 
@@ -102,6 +103,8 @@ It can be seen running here:
 
 http://satyam.com.ar/yui/3.0.0/flyWeightTreeView/
 
-And the API docs here:
+And the API docs for the version in the Gallery (along all the rest of my modules) here:
 
-http://satyam.com.ar/yui/3.0.0/flyWeightTreeView/out
+http://satyam.github.com/apiDocsGallery/
+
+(the API docs for this deprecated version are at:  http://satyam.com.ar/yui/3.0.0/flyWeightTreeView/out)

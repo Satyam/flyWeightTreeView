@@ -50,7 +50,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * Function will run in the scope of the FlyweightManager instance and will
 		 * receive:
 		 * 
-		 * * node {Y.FlyweightNode} reference to the parent of the children to be loaded.
+		 * * node {FlyweightNode} reference to the parent of the children to be loaded.
 		 * * callback {Function} function to call with the configuration info for the children.
 		 * 
 		 * The function shall fetch the nodes and create a configuration object 
@@ -227,10 +227,10 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * Pulls from the pool an instance of the type declared in the given node
 		 * and slides it over that node.
 		 * If there are no instances of the given type in the pool, a new one will be created via {{#crossLink "_createNode"}}{{/crossLink}}
-		 * If an instance is held (see: {{#crossLink "Y.FlyweightNode/hold"}}{{/crossLink}}), it will be returned instead.
+		 * If an instance is held (see: {{#crossLink "FlyweightNode/hold"}}{{/crossLink}}), it will be returned instead.
 		 * @method _poolFetch
 		 * @param node {Object} reference to a node within the configuration tree
-		 * @return {Y.FlyweightNode} Usually a subclass of FlyweightNode positioned over the given node
+		 * @return {FlyweightNode} Usually a subclass of FlyweightNode positioned over the given node
 		 * @protected
 		 */
 		_poolFetch: function(node) {
@@ -254,9 +254,9 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		},
 		/**
 		 * Returns the FlyweightNode instance to the pool.
-		 * Instances held (see: {{#crossLink "Y.FlyweightNode/hold"}}{{/crossLink}}) are never returned.
+		 * Instances held (see: {{#crossLink "FlyweightNode/hold"}}{{/crossLink}}) are never returned.
 		 * @method _poolReturn
-		 * @param fwNode {Y.FlyweightNode} Instance to return.
+		 * @param fwNode {FlyweightNode} Instance to return.
 		 * @protected
 		 */
 		_poolReturn: function (fwNode) {
@@ -277,7 +277,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * and slides it on top of the node provided.
 		 * @method _createNode
 		 * @param node {Object} reference to a node within the configuration tree
-		 * @return {Y.FlyweightNode} Instance of the corresponding subclass of FlyweightNode
+		 * @return {FlyweightNode} Instance of the corresponding subclass of FlyweightNode
 		 * @protected
 		 */
 		_createNode: function (node) {
@@ -302,11 +302,11 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		},
 		/**
 		 * Returns an instance of Flyweight node positioned over the root
-		 * @method _getRootNode
-		 * @return {Y.FlyweightNode} 
+		 * @method getRoot
+		 * @return {FlyweightNode} 
 		 * @protected
 		 */
-		_getRootNode: function () {
+		getRoot: function () {
 			return this._poolFetch(this._tree);
 		},
 		/**
@@ -318,8 +318,8 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 */
 		_getHTML: function () {
 			var s = '',
-				root = this._getRootNode();
-			root.forEachChild( function (fwNode, index, array) {
+				root = this.getRoot();
+			root.forSomeChildren( function (fwNode, index, array) {
 				s += fwNode._getHTML(index, array.length, 0);
 			});
 			this._poolReturn(root);
@@ -328,7 +328,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		/**
 		 * Locates a node in the tree by the element that represents it.
 		 * @method _findNodeByElement
-		 * @param el {Y.Node} Any element belonging to the tree
+		 * @param el {Node} Any element belonging to the tree
 		 * @return {Object} Node that produced the markup for that element or null if not found
 		 * @protected
 		 */
@@ -354,7 +354,7 @@ YUI.add('flyweightmanager', function (Y, NAME) {
 		 * Returns a FlyweightNode instance from the pool, positioned over the node whose markup generated some event.
 		 * @method _poolFetchFromEvent
 		 * @param ev {EventFacade}
-		 * @return {Y.FlyweightNode} The FlyweightNode instance or null if not found.
+		 * @return {FlyweightNode} The FlyweightNode instance or null if not found.
 		 * @private
 		 */
 		_poolFetchFromEvent: function (ev) {
