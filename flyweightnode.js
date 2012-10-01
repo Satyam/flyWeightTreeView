@@ -437,5 +437,5 @@ YUI.add('flyweightnode', function (Y, NAME) {
 
 }, '@VERSION@',
 {
-	requires: ['base', 'base-build']
+	requires: ['base-core', 'base-build','flyweightmanager']
 });

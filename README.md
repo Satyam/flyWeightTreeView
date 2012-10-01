@@ -103,6 +103,8 @@ It can be seen running here:
 
 http://satyam.com.ar/yui/3.0.0/flyWeightTreeView/
 
+The demo in the link above uses the Gallery version of TreeView for the tree but the deprecated version for the form.
+
 And the API docs for the version in the Gallery (along all the rest of my modules) here:
 
 http://satyam.github.com/apiDocsGallery/
